@@ -17,6 +17,7 @@ export class PostListComponent implements OnInit, OnDestroy{
   // ];
 
   posts: Post[] = [];
+  isLoading = false;
   postsService: PostsService;
 
   private postsSub: Subscription;
@@ -26,10 +27,12 @@ export class PostListComponent implements OnInit, OnDestroy{
   }
 
   ngOnInit(){
+    this.isLoading = true;
     //getPosts doesnt return anything. We simply trigger http request
     this.postsService.getPosts();
     //this.posts = this.postsService.returnPosts();
     this.postsSub = this.postsService.getPostUpdateListener().subscribe((posts: Post[]) => {
+      this.isLoading = false;
       this.posts = posts;
     });
   }
