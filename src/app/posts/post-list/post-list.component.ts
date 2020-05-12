@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, OnDestroy } from "@angular/core";
 import { Subscription } from 'rxjs';
-
+import { PageEvent } from "@angular/material/paginator";
 import { Post } from '../post.model';
 import { PostsService } from '../posts.service';
 
@@ -18,6 +18,10 @@ export class PostListComponent implements OnInit, OnDestroy{
 
   posts: Post[] = [];
   isLoading = false;
+  totalPosts = 0;
+  postsPerPage = 2;
+  currentPage = 1;
+  pageSizedOptions = [1, 2, 5, 10];
   postsService: PostsService;
 
   private postsSub: Subscription;
@@ -29,16 +33,28 @@ export class PostListComponent implements OnInit, OnDestroy{
   ngOnInit(){
     this.isLoading = true;
     //getPosts doesnt return anything. We simply trigger http request
-    this.postsService.getPosts();
+    this.postsService.getPosts(this.postsPerPage, this.currentPage);
     //this.posts = this.postsService.returnPosts();
-    this.postsSub = this.postsService.getPostUpdateListener().subscribe((posts: Post[]) => {
+    this.postsSub = this.postsService.getPostUpdateListener().subscribe((postData: {posts: Post[], postCount: number}) => {
       this.isLoading = false;
-      this.posts = posts;
+      this.totalPosts = postData.postCount;
+      this.posts = postData.posts;
     });
   }
 
+  onChangedPage(pageData: PageEvent){
+    //console.log(pageData);
+    this.isLoading = true;
+    this.currentPage = pageData.pageIndex + 1;
+    this.postsPerPage = pageData.pageSize;
+    this.postsService.getPosts(this.postsPerPage, this.currentPage);
+  }
+
   onDelete(postId: string){
-    this.postsService.deletePost(postId);
+    this.isLoading = true;
+    this.postsService.deletePost(postId).subscribe(() => {
+      this.postsService.getPosts(this.postsPerPage, this.currentPage);
+    });
   }
 
    ngOnDestroy(){
